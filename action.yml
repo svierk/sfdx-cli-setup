@@ -5,11 +5,23 @@ branding:
   icon: 'terminal'
   color: 'blue'
 
+inputs:
+  version:
+    description: Specify SF CLI version to be installed, e.g. "2.32.8".
+    required: false
+
 runs:
   using: composite
   steps:
     - name: Install SF CLI
       shell: bash
       run: |
-        npm i -g @salesforce/cli
+        if [[ -z "${{ inputs.version }}" ]]; then
+          echo "No version specified, latest SF CLI version is installed..."
+          npm i -g @salesforce/cli
+        else
+          echo "Installing SF CLI with version ${{ inputs.version }}..."
+          npm i -g @salesforce/cli@${{ inputs.version }}
+        fi
+
         sf version
