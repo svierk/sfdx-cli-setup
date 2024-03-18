@@ -6,6 +6,9 @@ branding:
   color: 'blue'
 
 inputs:
+  plugins:
+    description: Specify SF CLI plugins to be installed, e.g. "['@salesforce/plugin-packaging','sfdx-git-delta']".
+    required: false
   version:
     description: Specify SF CLI version to be installed, e.g. "2.32.8".
     required: false
@@ -25,3 +28,14 @@ runs:
         fi
 
         sf version
+    - name: Install Plugins
+      if: ${{ inputs.plugins }}
+      shell: bash
+      run: |
+        echo "Installing SF CLI plugins: ${{ join( fromJSON(inputs.plugins), ', ') }}"
+
+        for i in ${{ join( fromJSON(inputs.plugins), ' ') }}
+        do
+          echo "Installing plugin $i..."
+          echo y | sf plugins install $i
+        done
