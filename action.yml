@@ -39,3 +39,5 @@ runs:
           echo "Installing plugin $i..."
           echo y | sf plugins install $i
         done
+
+        sf plugins
