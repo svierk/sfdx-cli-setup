@@ -31,6 +31,12 @@ jobs:
 Two optional parameters for the sfdx-cli-setup action can be used to set a specific CLI version if needed, in this example 2.32.8, as well as the CLI plugins to be installed, in this case sfdx-git-delta and @salesforce/plugin-packaging.
 The Node.js version in this example worflow is selected by using the action [get-node-version](https://github.com/svierk/get-node-version) that automatically pulls the version to be used from the _package.json_ file of the SFDX project.
 
+## Inputs
+
+| Name      | Required | Default | Description                                                                                          |
+| --------- | -------- | ------- | -------------------------------------------------------------------------------------------------- |
+| `plugins` | no       |         | SF CLI plugins to install as a JSON array, e.g. `"['@salesforce/plugin-packaging','sfdx-git-delta']"`. |
+| `version` | no       |         | SF CLI version to install, e.g. `2.32.8`. Installs the latest version if omitted.                   |
 
 ## Releases
 
