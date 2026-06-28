@@ -36,7 +36,7 @@ runs:
       if: ${{ inputs.plugins }}
       shell: bash
       env:
-        PLUGINS: ${{ join(fromJSON(inputs.plugins), ' ') }}
+        PLUGINS: ${{ inputs.plugins && join(fromJSON(inputs.plugins), ' ') || '' }}
       run: |
         set -euo pipefail
 
