@@ -12,6 +12,10 @@ inputs:
   version:
     description: Specify SF CLI version to be installed, e.g. "2.32.8".
     required: false
+  step-summary:
+    description: Write a result section to the GitHub Actions job summary. Set to false to avoid collisions with a custom workflow summary.
+    required: false
+    default: 'true'
 
 runs:
   using: composite
@@ -20,6 +24,7 @@ runs:
       shell: bash
       env:
         VERSION: ${{ inputs.version }}
+        STEP_SUMMARY: ${{ inputs.step-summary }}
       run: |
         set -euo pipefail
 
@@ -31,12 +36,25 @@ runs:
           npm i -g "@salesforce/cli@$VERSION"
         fi
 
-        sf version
+        cli_version=$(sf version)
+        echo "$cli_version"
+
+        echo "✅ Salesforce CLI ready"
+        if [[ "$STEP_SUMMARY" == "true" ]]; then
+          {
+            echo ""
+            echo "### ⚙️ Salesforce CLI setup"
+            echo ""
+            echo "- **Version:** \`$cli_version\`"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+        fi
     - name: Install Plugins
       if: ${{ inputs.plugins }}
       shell: bash
       env:
         PLUGINS: ${{ inputs.plugins && join(fromJSON(inputs.plugins), ' ') || '' }}
+        STEP_SUMMARY: ${{ inputs.step-summary }}
       run: |
         set -euo pipefail
 
@@ -48,3 +66,16 @@ runs:
         done
 
         sf plugins
+
+        echo "✅ Installed SF CLI plugins: $PLUGINS"
+        if [[ "$STEP_SUMMARY" == "true" ]]; then
+          {
+            echo ""
+            echo "### ⚙️ SF CLI plugins installed"
+            echo ""
+            for plugin in $PLUGINS; do
+              echo "- \`$plugin\`"
+            done
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+        fi

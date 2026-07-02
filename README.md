@@ -37,6 +37,7 @@ The Node.js version in this example worflow is selected by using the action [get
 | --------- | -------- | ------- | -------------------------------------------------------------------------------------------------- |
 | `plugins` | no       |         | SF CLI plugins to install as a JSON array, e.g. `"['@salesforce/plugin-packaging','sfdx-git-delta']"`. |
 | `version` | no       |         | SF CLI version to install, e.g. `2.32.8`. Installs the latest version if omitted.                   |
+| `step-summary` | no  | `true`  | Write a result section to the GitHub Actions [job summary](https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#adding-a-job-summary). Set to `false` to avoid collisions with a custom workflow summary. |
 
 ## Releases
 
