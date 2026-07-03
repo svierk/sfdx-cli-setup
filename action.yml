@@ -21,10 +21,10 @@ runs:
   using: composite
   steps:
     - name: Install SF CLI
+      id: install-cli
       shell: bash
       env:
         VERSION: ${{ inputs.version }}
-        STEP_SUMMARY: ${{ inputs.step-summary }}
       run: |
         set -euo pipefail
 
@@ -38,23 +38,15 @@ runs:
 
         cli_version=$(sf version)
         echo "$cli_version"
-
         echo "✅ Salesforce CLI ready"
-        if [[ "$STEP_SUMMARY" == "true" ]]; then
-          {
-            echo ""
-            echo "### ⚙️ Salesforce CLI setup"
-            echo ""
-            echo "- **Version:** \`$cli_version\`"
-            echo ""
-          } >> "$GITHUB_STEP_SUMMARY"
-        fi
+
+        echo "cli-version=$cli_version" >> "$GITHUB_OUTPUT"
     - name: Install Plugins
+      id: install-plugins
       if: ${{ inputs.plugins }}
       shell: bash
       env:
         PLUGINS: ${{ inputs.plugins && join(fromJSON(inputs.plugins), ' ') || '' }}
-        STEP_SUMMARY: ${{ inputs.step-summary }}
       run: |
         set -euo pipefail
 
@@ -68,14 +60,27 @@ runs:
         sf plugins
 
         echo "✅ Installed SF CLI plugins: $PLUGINS"
-        if [[ "$STEP_SUMMARY" == "true" ]]; then
-          {
-            echo ""
-            echo "### ⚙️ SF CLI plugins installed"
-            echo ""
+
+        echo "plugins=$PLUGINS" >> "$GITHUB_OUTPUT"
+    - name: Write job summary
+      if: ${{ inputs.step-summary == 'true' }}
+      shell: bash
+      env:
+        CLI_VERSION: ${{ steps.install-cli.outputs.cli-version }}
+        PLUGINS: ${{ steps.install-plugins.outputs.plugins }}
+      run: |
+        set -euo pipefail
+
+        {
+          echo ""
+          echo "### ⚙️ Salesforce CLI setup"
+          echo ""
+          echo "- **Version:** \`$CLI_VERSION\`"
+          if [[ -n "$PLUGINS" ]]; then
+            echo "- **Plugins:**"
             for plugin in $PLUGINS; do
-              echo "- \`$plugin\`"
+              echo "  - \`$plugin\`"
             done
-            echo ""
-          } >> "$GITHUB_STEP_SUMMARY"
-        fi
+          fi
+          echo ""
+        } >> "$GITHUB_STEP_SUMMARY"
