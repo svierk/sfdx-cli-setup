@@ -11,18 +11,22 @@ jobs:
   validation:
     name: Validation
     runs-on: ubuntu-latest
+    permissions:
+      contents: read # least-privilege GITHUB_TOKEN - this job only reads the repository
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false # the GITHUB_TOKEN is not needed after the checkout - don't leave it in .git/config
 
       - name: Select Node Version
-        uses: svierk/get-node-version@main
+        uses: svierk/get-node-version@v1.5.1
 
       - name: Install Dependencies
         run: npm ci
 
       - name: Install SF CLI
-        uses: svierk/sfdx-cli-setup@main
+        uses: svierk/sfdx-cli-setup@v1.1.2
         with:
           version: 2.32.8
           plugins: "['sfdx-git-delta', '@salesforce/plugin-packaging']"
@@ -45,12 +49,25 @@ Installing the latest SF CLI version is the recommended default, since Salesforc
 
 ```yaml
 - name: Install SF CLI
-  uses: svierk/sfdx-cli-setup@main
+  uses: svierk/sfdx-cli-setup@v1.1.2
   with:
     version: ${{ vars.SF_CLI_VERSION_OVERRIDE }}
 ```
 
 This wiring is safe to keep in place permanently: as long as the variable is unset or blank, the expression evaluates to an empty string and the action installs the latest version as usual. Only when the variable is populated does it take precedence - so a temporary pin becomes a pure configuration change, and removing the variable's value restores the default behaviour. The job summary always shows the CLI version that was actually installed.
+
+## Security & versioning
+
+Every `uses:` reference in the snippets above is **pinned to an exact release version**, e.g. `svierk/sfdx-cli-setup@v1.1.2`. Do the same in your own pipelines:
+
+- **Never reference a mutable ref** such as `@main` or `@v1`. It runs whatever code sits on that branch/tag at run time - with access to your org credentials - so a compromised or rewritten ref would run unnoticed.
+- **Good - pin to an exact release tag** (`@v1.1.2`). Readable, concrete, and bumped through reviewed pull requests.
+- **Strictest - pin to a full-length commit SHA** (`@a1b2c3d…`) with the version as a trailing comment. A SHA can never be re-pointed by the publisher; the cost is readability.
+- **Enable [Dependabot](https://docs.github.com/en/code-security/dependabot/working-with-dependabot/keeping-your-actions-up-to-date-with-dependabot) for `github-actions`** in the repository that consumes this action, so those pins are bumped for you instead of silently ageing.
+
+This action itself needs **no secrets and no `GITHUB_TOKEN` permissions** - it only installs the Salesforce CLI and its plugins. Grant the calling job the least privilege it needs (`contents: read` is enough for the example above) and use `persist-credentials: false` on the checkout so the token is not written to `.git/config` where the CLI or a plugin could pick it up.
+
+If you pass credentials to *other* steps of the same workflow, reference them in shell steps as **environment variables** (`"$SFDX_AUTH_URL"`), never by interpolating `${{ secrets.… }}` into the script itself - that would allow command injection and can leak values into the log. The steps of this action follow that rule for all of their inputs.
 
 ## Releases
 
